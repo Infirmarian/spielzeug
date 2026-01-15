@@ -1,0 +1,73 @@
+module;
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_opengl.h>
+
+#include <optional>
+#include <stdexcept>
+
+module spz.platform;
+
+namespace spz::platform
+{
+SDLWindow::SDLWindow(const std::string& title)
+{
+  if (!SDL_Init(SDL_INIT_VIDEO))
+  {
+    SDL_Log("SDL could not initialize! SDL error: %s\n", SDL_GetError());
+    throw std::runtime_error("SDL could not initialize!");
+  }
+
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+  m_window = SDL_CreateWindow(title.c_str(), 800, 600, SDL_WINDOW_OPENGL);
+  if (!m_window)
+  {
+    SDL_Log("Window could not be created! SDL error: %s\n", SDL_GetError());
+    throw std::runtime_error("Window could not be created!");
+  }
+
+  SDL_GLContext context = SDL_GL_CreateContext(m_window);
+  if (!context)
+  {
+    SDL_Log("OpenGL context could not be created! SDL error: %s\n",
+            SDL_GetError());
+    throw std::runtime_error("OpenGL context could not be created!");
+  }
+}
+SDLWindow::~SDLWindow() { shutdown(); }
+void SDLWindow::shutdown()
+{
+  if (m_window)
+  {
+    SDL_DestroyWindow(m_window);
+  }
+  m_window = nullptr;
+  SDL_Quit();
+}
+void foo(int* x)
+{
+  *x = 42;
+  ++x;
+}
+std::optional<QuitEvent> SDLWindow::poll_events()
+{
+  SDL_Event event;
+  if (SDL_PollEvent(&event))
+  {
+    if (event.type == SDL_EVENT_QUIT)
+    {
+      return QuitEvent{};
+    }
+    if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE)
+    {
+      return QuitEvent{};
+    }
+  }
+  return std::nullopt;
+}
+#pragma endregion Public
+}  // namespace spz::platform
