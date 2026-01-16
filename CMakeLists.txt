@@ -19,6 +19,7 @@ target_compile_options(engine PRIVATE ${COMPILER_FLAGS})
 
 target_link_directories(engine PRIVATE /opt/homebrew/opt/llvm/lib/c++)
 target_link_options(engine PRIVATE -stdlib=libc++ -fuse-ld=lld)
-target_link_libraries(engine PRIVATE SDL3::SDL3 glm::glm platform)
+target_link_libraries(engine PRIVATE SDL3::SDL3 glm::glm platform renderer_gl)
 
 add_subdirectory(platform)
+add_subdirectory(renderer/gl)

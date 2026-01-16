@@ -1,8 +1,13 @@
 set(COMPILER_FLAGS 
-    -stdlib=libc++
     -Wall
     -Wextra
     -Werror
+    -Weverything
+    -Wpedantic
+
+    -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
+
     # todo(rgeil): Dynamically determine this?
     -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 )
