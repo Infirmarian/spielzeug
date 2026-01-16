@@ -1,16 +1,30 @@
+#include <iostream>
+#include <variant>
+
 import spz.platform;
+
+template <class... Ts>
+struct overloaded : Ts...
+{
+  using Ts::operator()...;
+};
 
 int main()
 {
   spz::platform::SDLWindow window("Spielzeug");
-  while (true)
+  bool running = true;
+  while (running)
   {
     while (auto event = window.poll_events())
     {
-      if (event.has_value())
-      {
-        return 0;
-      }
+      std::visit(
+          overloaded{[&running](spz::platform::QuitEvent) { running = false; },
+                     [](spz::platform::WindowResizedEvent e)
+                     {
+                       std::cout << "Window resized to " << e.width << "x"
+                                 << e.height << "\n";
+                     }},
+          *event);
     }
     window.swap_buffer();
   }

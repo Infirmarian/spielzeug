@@ -3,13 +3,20 @@ module;
 
 #include <optional>
 #include <string>
+#include <variant>
 export module spz.platform;
 
 namespace spz::platform
 {
-struct QuitEvent
+export struct QuitEvent
 {
 };
+export struct WindowResizedEvent
+{
+  uint32_t width;
+  uint32_t height;
+};
+using Event = std::variant<QuitEvent, WindowResizedEvent>;
 export class SDLWindow
 {
  private:
@@ -20,7 +27,7 @@ export class SDLWindow
   ~SDLWindow();
 
   void shutdown();
-  [[nodiscard]] std::optional<QuitEvent> poll_events();
+  [[nodiscard]] std::optional<Event> poll_events();
   inline void swap_buffer() { SDL_GL_SwapWindow(m_window); }
 };
 }  // namespace spz::platform

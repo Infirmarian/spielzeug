@@ -23,7 +23,8 @@ SDLWindow::SDLWindow(const std::string& title)
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-  m_window = SDL_CreateWindow(title.c_str(), 800, 600, SDL_WINDOW_OPENGL);
+  m_window = SDL_CreateWindow(title.c_str(), 800, 600,
+                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
   if (!m_window)
   {
     SDL_Log("Window could not be created! SDL error: %s\n", SDL_GetError());
@@ -48,19 +49,20 @@ void SDLWindow::shutdown()
   m_window = nullptr;
   SDL_Quit();
 }
-void foo(int* x)
+
+std::optional<Event> SDLWindow::poll_events()
 {
-  *x = 42;
-  ++x;
-}
-std::optional<QuitEvent> SDLWindow::poll_events()
-{
-  SDL_Event event;
-  if (SDL_PollEvent(&event))
+  if (SDL_Event event; SDL_PollEvent(&event))
   {
     if (event.type == SDL_EVENT_QUIT)
     {
       return QuitEvent{};
+    }
+    if (event.type == SDL_EVENT_WINDOW_RESIZED)
+    {
+      return WindowResizedEvent{
+          .width = static_cast<uint32_t>(event.window.data1),
+          .height = static_cast<uint32_t>(event.window.data2)};
     }
     if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE)
     {

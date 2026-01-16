@@ -5,7 +5,6 @@ file(GLOB_RECURSE SOURCES "*.cpp")
 target_sources(platform PUBLIC FILE_SET CXX_MODULES FILES sdl.cppm)
 target_sources(platform PRIVATE ${SOURCES})
 
-target_compile_options(platform PRIVATE 
-    -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
-)
+
+target_compile_options(platform PRIVATE ${COMPILER_FLAGS})
 target_link_libraries(platform PRIVATE SDL3::SDL3)
