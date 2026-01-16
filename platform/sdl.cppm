@@ -21,7 +21,54 @@ export struct WindowSize
   int32_t width;
   int32_t height;
 };
-using Event = std::variant<QuitEvent, WindowResizedEvent>;
+
+export enum class KeyCode {
+  Unknown,
+  A,
+  B,
+  C,
+  D,
+  E,
+  F,
+  G,
+  H,
+  I,
+  J,
+  K,
+  L,
+  M,
+  N,
+  O,
+  P,
+  Q,
+  R,
+  S,
+  T,
+  U,
+  V,
+  W,
+  X,
+  Y,
+  Z
+};
+export struct KeyDownEvent
+{
+  KeyCode Key;
+};
+
+export struct KeyUpEvent
+{
+  KeyCode Key;
+};
+
+export struct MouseMotionEvent
+{
+  float XRel;
+  float YRel;
+};
+
+using Event = std::variant<QuitEvent, WindowResizedEvent, KeyDownEvent,
+                           KeyUpEvent, MouseMotionEvent>;
 export class SDLWindow
 {
  private:

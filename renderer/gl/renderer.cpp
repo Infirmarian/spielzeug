@@ -7,6 +7,7 @@ namespace spz::renderer::gl
 Renderer::Renderer(const int32_t width, const int32_t height)
 {
   gladLoadGL();
+  glEnable(GL_DEPTH_TEST);
   glViewport(0, 0, width, height);
 }
 }  // namespace spz::renderer::gl

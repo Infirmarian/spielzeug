@@ -8,6 +8,19 @@ module;
 
 module spz.platform;
 
+namespace
+{
+spz::platform::KeyCode translate_keycode(uint32_t sdlKeyCode)
+{
+  if (sdlKeyCode >= SDLK_A && sdlKeyCode <= SDLK_Z)
+  {
+    return static_cast<spz::platform::KeyCode>(
+        sdlKeyCode - SDLK_A + static_cast<uint32_t>(spz::platform::KeyCode::A));
+  }
+  return spz::platform::KeyCode::Unknown;
+}
+}  // namespace
+
 namespace spz::platform
 {
 SDLWindow::SDLWindow(const std::string& title)
@@ -30,6 +43,8 @@ SDLWindow::SDLWindow(const std::string& title)
     SDL_Log("Window could not be created! SDL error: %s\n", SDL_GetError());
     throw std::runtime_error("Window could not be created!");
   }
+  SDL_WarpMouseInWindow(m_window, 400, 300);
+  SDL_SetWindowRelativeMouseMode(m_window, true);
 
   SDL_GLContext context = SDL_GL_CreateContext(m_window);
   if (!context)
@@ -64,9 +79,21 @@ std::optional<Event> SDLWindow::poll_events()
           .width = static_cast<uint32_t>(event.window.data1),
           .height = static_cast<uint32_t>(event.window.data2)};
     }
-    if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE)
+    if (event.type == SDL_EVENT_KEY_DOWN)
     {
-      return QuitEvent{};
+      if (event.key.key == SDLK_ESCAPE)
+      {
+        return QuitEvent{};
+      }
+      return KeyDownEvent{translate_keycode(event.key.key)};
+    }
+    if (event.type == SDL_EVENT_KEY_UP)
+    {
+      return KeyUpEvent{translate_keycode(event.key.key)};
+    }
+    if (event.type == SDL_EVENT_MOUSE_MOTION)
+    {
+      return MouseMotionEvent{event.motion.xrel, event.motion.yrel};
     }
   }
   return std::nullopt;
