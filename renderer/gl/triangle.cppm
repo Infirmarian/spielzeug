@@ -4,7 +4,7 @@ module;
 
 #include "glad.hpp"
 
-export module spx.renderer.gl:triangle;
+export module spz.renderer.gl:triangle;
 
 namespace spz::renderer::gl
 {

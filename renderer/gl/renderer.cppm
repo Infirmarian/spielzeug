@@ -4,7 +4,7 @@ module;
 
 #include "glad.hpp"
 
-export module spx.renderer.gl:renderer;
+export module spz.renderer.gl:renderer;
 
 namespace spz::renderer::gl
 {

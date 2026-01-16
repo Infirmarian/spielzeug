@@ -3,7 +3,7 @@ module;
 #include <filesystem>
 #include <glm/fwd.hpp>
 
-export module spx.renderer.gl:shader;
+export module spz.renderer.gl:shader;
 
 namespace spz::renderer::gl
 {

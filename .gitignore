@@ -3,3 +3,4 @@ build/
 third_party
 !third_party/conanfile.txt
 !third_party/glad/
+!third_party/stb/

@@ -1,6 +1,6 @@
 module;
 
-export module spx.renderer.gl:material;
+export module spz.renderer.gl:material;
 
 namespace spz::renderer::gl
 {

@@ -1,6 +1,6 @@
 module;
 #include "glad.hpp"
-module spx.renderer.gl;
+module spz.renderer.gl;
 
 namespace spz::renderer::gl
 {
