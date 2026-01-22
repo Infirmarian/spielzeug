@@ -23,5 +23,6 @@ export class Shader
   void set_float(const char* name, float value);
   void set_int(const char* name, int32_t value);
   void set_mat4(const char* name, const glm::mat4& mat);
+  void set_vec3(const char* name, const glm::vec3& vec);
 };
 }  // namespace spz::renderer::gl

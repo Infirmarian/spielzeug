@@ -2,10 +2,12 @@
 #include <array>
 #include <chrono>
 #include <filesystem>
+#include <format>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/trigonometric.hpp>
 #include <optional>
 #include <print>
 #include <variant>
@@ -21,32 +23,59 @@ struct overloaded : Ts...
 
 namespace
 {
-constexpr auto unit_cube = std::to_array<float>(
-    {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
-     0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-     -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+constexpr auto unit_cube_textured_normal = std::to_array<float>(
+    {-0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  0.5f,  -0.5f,
+     -0.5f, 0.0f,  0.0f,  -1.0f, 1.0f,  0.0f,  0.5f,  0.5f,  -0.5f, 0.0f,
+     0.0f,  -1.0f, 1.0f,  1.0f,  0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
+     1.0f,  1.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, 0.0f,  1.0f,
+     -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,
 
-     -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
+     -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  0.5f,  -0.5f,
+     0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,  0.5f,  0.5f,  0.5f,  0.0f,
+     0.0f,  1.0f,  1.0f,  1.0f,  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+     1.0f,  1.0f,  -0.5f, 0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+     -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
 
-     -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
-     -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-     -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
+     -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,
+     -0.5f, -1.0f, 0.0f,  0.0f,  1.0f,  1.0f,  -0.5f, -0.5f, -0.5f, -1.0f,
+     0.0f,  0.0f,  0.0f,  1.0f,  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,
+     0.0f,  1.0f,  -0.5f, -0.5f, 0.5f,  -1.0f, 0.0f,  0.0f,  0.0f,  0.0f,
+     -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
 
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-     0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
-     0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.5f,  0.5f,
+     -0.5f, 1.0f,  0.0f,  0.0f,  1.0f,  1.0f,  0.5f,  -0.5f, -0.5f, 1.0f,
+     0.0f,  0.0f,  0.0f,  1.0f,  0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+     0.0f,  1.0f,  0.5f,  -0.5f, 0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
-     -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
-     0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-     -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+     -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.0f,  1.0f,  0.5f,  -0.5f,
+     -0.5f, 0.0f,  -1.0f, 0.0f,  1.0f,  1.0f,  0.5f,  -0.5f, 0.5f,  0.0f,
+     -1.0f, 0.0f,  1.0f,  0.0f,  0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,
+     1.0f,  0.0f,  -0.5f, -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  0.0f,  0.0f,
+     -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.0f,  1.0f,
 
-     -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f});
+     -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.5f,  0.5f,
+     -0.5f, 0.0f,  1.0f,  0.0f,  1.0f,  1.0f,  0.5f,  0.5f,  0.5f,  0.0f,
+     1.0f,  0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+     1.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+     -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.0f,  1.0f});
 
-constexpr auto cubePositions = std::to_array<glm::vec3>(
+[[maybe_unused]] const auto unit_cube = std::invoke(
+    []
+    {
+      std::array<float, (3 * unit_cube_textured_normal.size()) / 8> result;
+      for (uint32_t i = 0, j = 0; i < unit_cube_textured_normal.size(); ++i)
+      {
+        if (i % 8 < 3)
+        {
+          result[j] = unit_cube_textured_normal[i];
+          ++j;
+        }
+      }
+      return result;
+    });
+
+[[maybe_unused]] constexpr auto cubePositions = std::to_array<glm::vec3>(
     {glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(2.0f, 5.0f, -15.0f),
      glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
      glm::vec3(2.4f, -0.4f, -3.5f), glm::vec3(-1.7f, 3.0f, -7.5f),
@@ -168,6 +197,11 @@ class Camera
   {
     return glm::lookAt(m_pos, m_pos + m_front, cameraUp);
   }
+  [[nodiscard]] constexpr const glm::vec3& position() const { return m_pos; }
+  [[maybe_unused]] [[nodiscard]] constexpr const glm::vec3& front() const
+  {
+    return m_front;
+  }
 };
 }  // namespace
 
@@ -177,9 +211,16 @@ int main()
   const auto window_size = window.get_window_size();
   spz::renderer::gl::Renderer renderer(window_size.width, window_size.height);
 
-  spz::renderer::gl::Triangle triangle =
-      spz::renderer::gl::Triangle::create_mesh(unit_cube);
-  const auto tex1 = spz::renderer::gl::Texture(kTextureDir() / "wall.jpg");
+  [[maybe_unused]] auto unitCubeObj = spz::renderer::gl::Mesh::create_mesh<
+      spz::renderer::gl::Mesh::IncludeTexture::True,
+      spz::renderer::gl::Mesh::IncludeNormal::True>(unit_cube_textured_normal);
+  auto unitCubeBlank = spz::renderer::gl::Mesh::create_mesh<
+      spz::renderer::gl::Mesh::IncludeTexture::False,
+      spz::renderer::gl::Mesh::IncludeNormal::False>(unit_cube);
+  auto light = spz::renderer::gl::Light{unitCubeBlank};
+  auto tex1 = spz::renderer::gl::Texture(kTextureDir() / "container2.png");
+  auto tex2 =
+      spz::renderer::gl::Texture(kTextureDir() / "container2_specular.png");
   const auto vertexShader = kShaderDir() / "shader.vert";
   const auto fragmentShader = kShaderDir() / "shader.frag";
   glm::mat4 projection =
@@ -188,11 +229,13 @@ int main()
                            static_cast<float>(window_size.height),
                        0.1f, 100.0f);
   auto shader = spz::renderer::gl::Shader(vertexShader, fragmentShader);
+  auto lightShader =
+      spz::renderer::gl::Shader(vertexShader, kShaderDir() / "light.frag");
 
   bool running = true;
   const auto time = std::chrono::steady_clock::now();
   InputStateHolder inputs;
-  Camera cam{{0.0f, 0.0f, -3.0f}, {0.0f, 0.0f, 1.0f}};
+  Camera cam{{-5.0f, 1.0f, 0.f}, {0.1f, 0.0f, -0.1f}};
   float last_frame_elapsed_seconds{0.0f};
   while (running)
   {
@@ -209,27 +252,19 @@ int main()
           overloaded{
               [&running](spz::platform::QuitEvent) { running = false; },
               [](spz::platform::WindowResizedEvent e)
-              {
-                std::cout << "Window resized to " << e.width << "x" << e.height
-                          << "\n";
-              },
+              { std::println("Window resized to {}x{}", e.width, e.height); },
               [&inputs](spz::platform::KeyDownEvent e)
               {
                 inputs.record_key_down(e.Key);
-                std::cout << "Pressed key: " << static_cast<int32_t>(e.Key)
-                          << std::endl;
+                std::println("Pressed key {}", static_cast<int32_t>(e.Key));
               },
               [&inputs](spz::platform::KeyUpEvent e)
               {
                 inputs.record_key_up(e.Key);
-                std::cout << "Released key: " << static_cast<int32_t>(e.Key)
-                          << std::endl;
+                std::println("Released key {}", static_cast<int32_t>(e.Key));
               },
               [&inputs](spz::platform::MouseMotionEvent e)
-              {
-                std::println("Mouse at {:f}x{:f}", e.XRel, e.YRel);
-                inputs.record_mouse_movement(e);
-              },
+              { inputs.record_mouse_movement(e); },
           },
           *event);
     }
@@ -239,18 +274,63 @@ int main()
 
     inputs.record_mouse_movement({0.f, 0.f});
 
-    for (auto posVec : cubePositions)
+    shader.use();
+    shader.set_int("material.diffuse", 0);
+    shader.set_int("material.specular", 1);
+    tex1.use(0);
+    tex2.use(1);
+    shader.set_float("material.shininess", 32.f);
+
+    shader.set_vec3("dirLight.ambient", glm::vec3(0.1f));
+    shader.set_vec3("dirLight.diffuse", glm::vec3(0.8f));
+    shader.set_vec3("dirLight.specular", glm::vec3(1.f));
+    shader.set_vec3("dirLight.direction", {-0.2f, -1.f, -.3f});
+
+    shader.set_vec3("viewPos", cam.position());
+
+    std::array<glm::vec3, 4> pointLightPositions = {
+        glm::vec3(0.7f, 0.2f, 2.0f), glm::vec3(2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f, 2.0f, -12.0f), glm::vec3(0.0f, 0.0f, -3.0f)};
+    for (uint32_t i = 0; i < pointLightPositions.size(); ++i)
+    {
+      shader.set_float(std::format("pointLights[{}].constant", i).c_str(), 1.f);
+      shader.set_float(std::format("pointLights[{}].linear", i).c_str(), 0.09f);
+      shader.set_float(std::format("pointLights[{}].quadratic", i).c_str(),
+                       0.032f);
+      shader.set_vec3(std::format("pointLights[{}].position", i).c_str(),
+                      pointLightPositions[i]);
+      shader.set_vec3(std::format("pointLights[{}].ambient", i).c_str(),
+                      glm::vec3(0.05f));
+      shader.set_vec3(std::format("pointLights[{}].diffuse", i).c_str(),
+                      glm::vec3(0.8f));
+      shader.set_vec3(std::format("pointLights[{}].specular", i).c_str(),
+                      glm::vec3(1.f));
+    }
+
+    for (float angle = 0.f; const auto& cubePos : cubePositions)
     {
       auto pos = glm::mat4(1.0f);
-      pos = glm::translate(pos, posVec);
-      pos = glm::rotate(pos, glm::radians(elapsed_seconds * 20.0f),
-                        glm::vec3(1.0f, 1.0f, 0.0f));
+      pos = glm::translate(pos, cubePos);
+      pos = glm::rotate(pos, glm::radians(elapsed_seconds * 25.f + angle),
+                        {1.0f, 0.5f, 1.0f});
+      angle += 20.f;
       shader.set_mat4("model", pos);
-      triangle.render();
+      unitCubeObj.render();
     }
+
     shader.set_mat4("projection", projection);
     shader.set_mat4("view", cameraMat);
-    shader.use();
+
+    lightShader.use();
+    for (auto lightPos : pointLightPositions)
+    {
+      auto posMat = glm::translate(glm::mat4{1.f}, lightPos);
+      posMat = glm::scale(posMat, glm::vec3{0.2f});
+      lightShader.set_mat4("model", posMat);
+      light.render();
+    }
+    lightShader.set_mat4("projection", projection);
+    lightShader.set_mat4("view", cameraMat);
     window.swap_buffer();
   }
 }

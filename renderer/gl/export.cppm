@@ -1,7 +1,8 @@
 module;
 export module spz.renderer.gl;
 export import :material;
-export import :shader;
+export import :mesh;
 export import :renderer;
-export import :triangle;
+export import :shader;
 export import :texture;
+export import :light;

@@ -102,10 +102,23 @@ Shader::Shader(const std::filesystem::path& vertexShaderPath,
       create_shader(vertexShaderSrc.c_str(), fragmentShaderSrc.c_str());
 }
 
+void Shader::set_float(const char* name, const float val)
+{
+  glUniform1f(glGetUniformLocation(m_program_id, name), val);
+}
+void Shader::set_int(const char* name, const int32_t val)
+{
+  glUniform1i(glGetUniformLocation(m_program_id, name), val);
+}
+
 void Shader::set_mat4(const char* name, const glm::mat4& mat)
 {
   glUniformMatrix4fv(glGetUniformLocation(m_program_id, name), 1, GL_FALSE,
                      glm::value_ptr(mat));
+}
+void Shader::set_vec3(const char* name, const glm::vec3& vec)
+{
+  glUniform3f(glGetUniformLocation(m_program_id, name), vec.x, vec.y, vec.z);
 }
 
 void Shader::use() const { glUseProgram(m_program_id); }
