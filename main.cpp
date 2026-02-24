@@ -188,9 +188,9 @@ class Camera
     m_pitch = std::clamp(m_pitch, -89.0f, 89.0f);
 
     glm::vec3 direction;
-    direction.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
-    direction.y = sin(glm::radians(m_pitch));
-    direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+    direction.x = cosf(glm::radians(m_yaw)) * cosf(glm::radians(m_pitch));
+    direction.y = sinf(glm::radians(m_pitch));
+    direction.z = sinf(glm::radians(m_yaw)) * cosf(glm::radians(m_pitch));
     m_front = glm::normalize(direction);
   }
   [[nodiscard]] constexpr glm::mat4 get_view_matrix() const
@@ -211,12 +211,14 @@ int main()
   const auto window_size = window.get_window_size();
   spz::renderer::gl::Renderer renderer(window_size.width, window_size.height);
 
-  [[maybe_unused]] auto unitCubeObj = spz::renderer::gl::Mesh::create_mesh<
-      spz::renderer::gl::Mesh::IncludeTexture::True,
-      spz::renderer::gl::Mesh::IncludeNormal::True>(unit_cube_textured_normal);
-  auto unitCubeBlank = spz::renderer::gl::Mesh::create_mesh<
-      spz::renderer::gl::Mesh::IncludeTexture::False,
-      spz::renderer::gl::Mesh::IncludeNormal::False>(unit_cube);
+  [[maybe_unused]] auto unitCubeObj =
+      spz::renderer::gl::Mesh_Basic::create_mesh<
+          spz::renderer::gl::Mesh_Basic::IncludeTexture::True,
+          spz::renderer::gl::Mesh_Basic::IncludeNormal::True>(
+          unit_cube_textured_normal);
+  auto unitCubeBlank = spz::renderer::gl::Mesh_Basic::create_mesh<
+      spz::renderer::gl::Mesh_Basic::IncludeTexture::False,
+      spz::renderer::gl::Mesh_Basic::IncludeNormal::False>(unit_cube);
   auto light = spz::renderer::gl::Light{unitCubeBlank};
   auto tex1 = spz::renderer::gl::Texture(kTextureDir() / "container2.png");
   auto tex2 =

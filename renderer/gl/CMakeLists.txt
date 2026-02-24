@@ -23,4 +23,5 @@ target_link_libraries(renderer_gl
         PRIVATE
         glm::glm
         glad
+        # assimp::assimp
 )

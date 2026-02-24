@@ -6,9 +6,10 @@ set(CMAKE_CXX_STANDARD 23)
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/third_party")
 include(cmake/compile_flags.cmake)
 
-find_package(LLVM QUIET)
+find_package(LLVM REQUIRED)
 find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
 find_package(OpenGL REQUIRED)
+find_package(assimp REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 add_executable(engine)

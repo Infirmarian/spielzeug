@@ -1,104 +1,119 @@
 module;
-#include <array>
 #include <cstddef>
+#include <cstdint>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <vector>
 
 #include "glad.hpp"
 
 export module spz.renderer.gl:mesh;
+import :shader;
 
 namespace spz::renderer::gl
 {
-export class Mesh
+struct Vertex
+{
+  glm::vec3 Position;
+  glm::vec3 Normal;
+  glm::vec2 TexCoords;
+};
+
+enum class TextureType
+{
+  Unknown = 0,
+  Diffuse = 1,
+  Specular = 2
+};
+
+struct Texture
+{
+  TextureType type;
+  uint32_t id;
+};
+
+class Mesh
 {
  private:
-  uint32_t m_vao;
-  uint32_t m_n_vertices;
+  std::vector<Vertex> _vertices;
+  std::vector<uint32_t> _indices;
+  std::vector<Texture> _textures;
 
  public:
-  enum class IncludeTexture : bool
+  Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices,
+       std::vector<Texture> textures)
+      : _vertices(std::move(vertices)),
+        _indices{std::move(indices)},
+        _textures(std::move(textures))
   {
-    False,
-    True
-  };
-  enum class IncludeNormal : bool
-  {
-    False,
-    True
-  };
-  template <IncludeTexture HasTex, IncludeNormal HasNormal, std::size_t N>
-  static Mesh create_mesh(const std::array<float, N>& vertices)
-  {
-    constexpr auto floats_per_vertex = std::invoke(
-        []
-        {
-          int count = 3;
-          if (static_cast<bool>(HasTex))
-          {
-            count += 2;
-          }
-          if (static_cast<bool>(HasNormal))
-          {
-            count += 3;
-          }
-          return count;
-        });
-    constexpr auto num_vertices = N / floats_per_vertex;
-    uint32_t VAO, VBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float),
-                 vertices.data(), GL_STATIC_DRAW);
-
-    auto index = 0u;
-    auto offsetCount = 0u;
-
-    glVertexAttribPointer(index, 3, GL_FLOAT, GL_FALSE,
-                          floats_per_vertex * sizeof(float), nullptr);
-    glEnableVertexAttribArray(index);
-
-    ++index;
-    offsetCount += 3;
-
-    if constexpr (static_cast<bool>(HasNormal))
-    {
-      const auto offset = reinterpret_cast<void*>(offsetCount * sizeof(float));
-      glVertexAttribPointer(index, 3, GL_FLOAT, GL_FALSE,
-                            floats_per_vertex * sizeof(float), offset);
-      glEnableVertexAttribArray(index);
-      ++index;
-      offsetCount += 3;
-    }
-
-    if constexpr (static_cast<bool>(HasTex))
-    {
-      const auto offset = reinterpret_cast<void*>(offsetCount * sizeof(float));
-      glVertexAttribPointer(index, 2, GL_FLOAT, GL_FALSE,
-                            floats_per_vertex * sizeof(float), offset);
-      glEnableVertexAttribArray(index);
-      ++index;
-      offsetCount += 2;
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    return Mesh{VAO, num_vertices};
+    setupMesh();
   }
-
-  inline void render() const
+  void render(Shader& shader)
   {
-    glBindVertexArray(m_vao);
-    glDrawArrays(GL_TRIANGLES, 0, static_cast<int32_t>(m_n_vertices));
+    char diffuse_name[] = "material.texture_diffuse0";
+    char specular_name[] = "material.texture_specular0";
+    uint8_t diffuseCount = 0, specularCount = 0;
+    for (auto i = 0u; i < _textures.size(); ++i)
+    {
+      glActiveTexture(GL_TEXTURE0 + i);
+      const char* name;
+      if (_textures[i].type == TextureType::Diffuse)
+      {
+        diffuse_name[sizeof(diffuse_name) - 2] = '0' + (diffuseCount++);
+        name = diffuse_name;
+      }
+      else if (_textures[i].type == TextureType::Specular)
+      {
+        specular_name[sizeof(specular_name) - 2] = '0' + (specularCount++);
+        name = specular_name;
+      }
+      else
+      {
+        // Error
+        continue;
+      }
+      shader.set_int(name, static_cast<int32_t>(i));
+      glBindTexture(GL_TEXTURE_2D, _textures[i].id);
+    }
+    glActiveTexture(GL_TEXTURE9);
+
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, static_cast<int32_t>(_indices.size()),
+                   GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
   }
 
  private:
-  Mesh(const uint32_t vao, const uint32_t n_vertices)
-      : m_vao{vao}, m_n_vertices{n_vertices}
+  uint32_t VAO, VBO, EBO;
+  [[maybe_unused]] uint32_t _padding;
+  void setupMesh()
   {
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<int64_t>(_vertices.size() * sizeof(Vertex)),
+                 &_vertices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 static_cast<int64_t>(_indices.size() * sizeof(uint32_t)),
+                 &_indices[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, Normal)));
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, TexCoords)));
+
+    glBindVertexArray(0);
   }
 };
 }  // namespace spz::renderer::gl

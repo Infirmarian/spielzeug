@@ -1,5 +1,4 @@
 module;
-#include <cmath>
 #include <cstdint>
 
 #include "glad.hpp"

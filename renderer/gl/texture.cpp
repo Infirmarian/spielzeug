@@ -15,7 +15,7 @@ module;
 #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
 #pragma clang diagnostic ignored "-Wswitch-default"
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+#include "stb/stb_image.h"
 #pragma clang diagnostic pop
 
 #include <sys/types.h>
