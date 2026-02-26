@@ -8,6 +8,7 @@ set(COMPILER_FLAGS
     -Wno-c++98-compat
     -Wno-c++98-compat-pedantic
     -Wno-switch-enum
+    -Wunsafe-buffer-usage
 
     # todo(rgeil): Dynamically determine this?
     -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk

@@ -26,7 +26,7 @@ module;
 module spz.renderer.gl;
 namespace spz::renderer::gl
 {
-Texture::Texture(const std::filesystem::path& path)
+uint32_t load_texture_from_file(const std::filesystem::path& path)
 {
   stbi_set_flip_vertically_on_load(true);
   uint32_t format = GL_RGB;
@@ -42,8 +42,9 @@ Texture::Texture(const std::filesystem::path& path)
     ss << "Failed to load texture. Path: " << path.c_str();
     throw std::runtime_error(ss.str());
   }
-  glGenTextures(1, &m_texture);
-  glBindTexture(GL_TEXTURE_2D, m_texture);
+  uint32_t textureId;
+  glGenTextures(1, &textureId);
+  glBindTexture(GL_TEXTURE_2D, textureId);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -55,11 +56,17 @@ Texture::Texture(const std::filesystem::path& path)
                GL_UNSIGNED_BYTE, data);
   glGenerateMipmap(GL_TEXTURE_2D);
   stbi_image_free(data);
+  return textureId;
 }
-void Texture::use(const uint32_t textureId)
+
+TextureObj::TextureObj(const std::filesystem::path& path)
+{
+  m_texture = load_texture_from_file(path);
+}
+void TextureObj::use(const uint32_t textureId)
 {
   glActiveTexture(GL_TEXTURE0 + textureId);
   glBindTexture(GL_TEXTURE_2D, m_texture);
 }
-Texture::~Texture() { glDeleteTextures(1, &m_texture); }
+TextureObj::~TextureObj() { glDeleteTextures(1, &m_texture); }
 }  // namespace spz::renderer::gl

@@ -2,6 +2,7 @@ module;
 #include <cstdint>
 
 #include "glad.hpp"
+#include <cmath>
 
 export module spz.renderer.gl:renderer;
 
@@ -9,12 +10,12 @@ namespace spz::renderer::gl
 {
 export inline void draw_background()
 {
-  // static float green = 0.0f;
-  // static float increment = 0.0001f;
-  // glClearColor(0.2f, std::sin(green) * 0.5f + 0.5f, 0.3f, 1.0f);
-  glClearColor(0.1f, 0.1f, 0.1f, 1.f);
+  static float green = 0.0f;
+  static float increment = 0.0001f;
+  glClearColor(0.2f, std::sin(green) * 0.5f + 0.5f, 0.3f, 1.0f);
+  // glClearColor(0.1f, 0.1f, 0.1f, 1.f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // green += increment;
+  green += increment;
 }
 export class Renderer
 {

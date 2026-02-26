@@ -83,6 +83,7 @@ constexpr auto unit_cube_textured_normal = std::to_array<float>(
      glm::vec3(1.5f, 0.2f, -1.5f), glm::vec3(-1.3f, 1.0f, -1.5f)});
 const std::filesystem::path kTextureDir() { return "renderer/gl/textures/"; };
 const std::filesystem::path kShaderDir() { return "renderer/gl/shaders/"; };
+const std::filesystem::path kModelDirectory() { return "renderer/gl/models/"; };
 
 struct InputAxis
 {
@@ -210,19 +211,19 @@ int main()
   spz::platform::SDLWindow window("Spielzeug");
   const auto window_size = window.get_window_size();
   spz::renderer::gl::Renderer renderer(window_size.width, window_size.height);
+  auto basicShader = spz::renderer::gl::Shader(kShaderDir() / "basic.vert",
+                                               kShaderDir() / "basic.frag");
 
-  [[maybe_unused]] auto unitCubeObj =
-      spz::renderer::gl::Mesh_Basic::create_mesh<
-          spz::renderer::gl::Mesh_Basic::IncludeTexture::True,
-          spz::renderer::gl::Mesh_Basic::IncludeNormal::True>(
-          unit_cube_textured_normal);
+  auto backpack =
+      spz::renderer::gl::load_model(kModelDirectory() / "backpack" / "backpack.obj");
+
   auto unitCubeBlank = spz::renderer::gl::Mesh_Basic::create_mesh<
       spz::renderer::gl::Mesh_Basic::IncludeTexture::False,
       spz::renderer::gl::Mesh_Basic::IncludeNormal::False>(unit_cube);
   auto light = spz::renderer::gl::Light{unitCubeBlank};
-  auto tex1 = spz::renderer::gl::Texture(kTextureDir() / "container2.png");
+  auto tex1 = spz::renderer::gl::TextureObj(kTextureDir() / "container2.png");
   auto tex2 =
-      spz::renderer::gl::Texture(kTextureDir() / "container2_specular.png");
+      spz::renderer::gl::TextureObj(kTextureDir() / "container2_specular.png");
   const auto vertexShader = kShaderDir() / "shader.vert";
   const auto fragmentShader = kShaderDir() / "shader.frag";
   glm::mat4 projection =
@@ -317,11 +318,20 @@ int main()
                         {1.0f, 0.5f, 1.0f});
       angle += 20.f;
       shader.set_mat4("model", pos);
-      unitCubeObj.render();
+      // unitCubeObj.render();
     }
 
     shader.set_mat4("projection", projection);
     shader.set_mat4("view", cameraMat);
+
+    basicShader.use();
+    auto model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.f, 0.f, 0.f));
+    model = glm::scale(model, glm::vec3(1.f));
+    basicShader.set_mat4("model", model);
+    basicShader.set_mat4("projection", projection);
+    basicShader.set_mat4("view", cameraMat);
+    backpack.render(basicShader);
 
     lightShader.use();
     for (auto lightPos : pointLightPositions)
