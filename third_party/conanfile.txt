@@ -3,6 +3,7 @@ sdl/3.2.20
 opengl/system
 glm/1.0.1
 assimp/6.0.2
+tracy/0.13.1
 
 [generators]
 CMakeDeps
